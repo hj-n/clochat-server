@@ -19,3 +19,7 @@ def retrieve_task_info(Participant, Task, id_num, task_index, study_type):
 	task = Task.query.filter_by(task_id_num=task_id).first()
 	task_info = {"title": task.title, "description": task.description}
 	return task_info
+
+def retreive_conversations(Conversations, id_num, task_index, study_type):
+	conversations = Conversations.query.filter_by(participant=id_num, task_index=task_index, study_type=study_type).all()
+	return conversations

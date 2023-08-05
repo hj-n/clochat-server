@@ -4,9 +4,11 @@ from flask_cors import CORS
 
 import os
 
-from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start
+from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation
 
-from retreive import retreive_current_task_indices, retrieve_task_info
+from retreive import retreive_current_task_indices, retrieve_task_info, retreive_conversations 
+
+from chatgpt_communication import get_new_answer_chatgpt
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
@@ -56,8 +58,8 @@ class Conversation(db.Model):
 	is_end	 = db.Column(db.Boolean)
 
 	## conversation data
-	conversation = db.Column(db.String(3600))
-	speaker      = db.Column(db.String(80))
+	content      = db.Column(db.String(3600))
+	role         = db.Column(db.String(80))
 	study_type   = db.Column(db.String(80))
 
 
@@ -110,7 +112,41 @@ def get_task_info():
 		return jsonify(task_info)
 	else:
 		return "ERROR"
+	
+@app.route('/postconversation', methods=["POST"])
+def post_conversation():
+	args = request.args
+	id_num     = args.get("id")
+	task_index = args.get("taskIndex")
+	content 	 = args.get("content")
+	study_type = args.get("studyType")
+	role 		   = "user"
 
+	if id_num and task_index and content and study_type:
+		register_new_conversation(db, Conversation, Participant, id_num, task_index, study_type, content, role)
+		conversations = retreive_conversations(Conversation, id_num, task_index, study_type)
+		answer = get_new_answer_chatgpt(conversations)
+		register_new_conversation(db, Conversation, Participant, id_num, task_index, study_type, answer, "assistant")
+
+		return "OK"
+
+@app.route('/getconversations', methods=["GET"])
+def get_conversations():
+	args = request.args
+	id_num = args.get("id")
+	task_index = args.get("taskIndex")
+	study_type = args.get("studyType")
+
+	if id_num and task_index and study_type:
+		conversations = retreive_conversations(Conversation, id_num, task_index, study_type)
+		conversations_json = []
+		for conversation in conversations:
+			if conversation.is_start or conversation.is_end:
+				continue
+			conversations_json.append({"content": conversation.content, "role": conversation.role})
+		return jsonify(conversations_json)
+	else:
+		return "ERROR"
 	
 
 with app.app_context():
