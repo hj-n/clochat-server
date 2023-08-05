@@ -4,11 +4,16 @@ from flask_cors import CORS
 
 import os
 
+from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
 db = SQLAlchemy(app)
-
 CORS(app)
+
+"""
+Model for the database
+"""
 
 
 
@@ -24,27 +29,48 @@ class Participant(db.Model):
 	gen_ai_friendliness = db.Column(db.Integer)
 	llm_friendliness    = db.Column(db.Integer)
 	prompting_friendliness = db.Column(db.Integer)
+	clochat_list = db.Column(db.String(80))
+	chatgpt_list = db.Column(db.String(80))
 
     
 	def __repr__(self):
 		return '<Participant %r>' % self.id_num
 	
-with app.app_context():
-	if not os.path.exists('database.db'):
-		db.create_all()
+class Task(db.Model):
+	task_id_num = db.Column(db.Integer, primary_key=True)
+	type        = db.Column(db.String(80))
+	title       = db.Column(db.String(80))
+	description = db.Column(db.String(3600))
+
+class Conversation(db.Model):
+	conver_id = db.Column(db.Integer, primary_key=True)
+	## connected Task
+	task = db.Column(db.Integer, db.ForeignKey('task.task_id_num'))
+	## connected Participant
+	participant = db.Column(db.Integer, db.ForeignKey('participant.id_num'))
+
+	is_start = db.Column(db.Boolean)
+	is_end	 = db.Column(db.Boolean)
+
+	## conversation data
+	conversation = db.Column(db.String(3600))
+	speaker      = db.Column(db.String(80))
 
 
-@app.route('/')
-def index():
-	return "TEST"
+"""
+Server functions
+"""
+
 
 @app.route('/register', methods=["POST"])
 def register():
-	param = request.args.get("id")
-	if param:
-		participant = Participant(id_num=int(param))
-		db.session.add(participant)
-		db.session.commit()
+	id_num = request.args.get("id")
+	if id_num:
+		if len(Participant.query.filter_by(id_num=id_num).all()) == 0:
+			register_participant(db, Participant, id_num)
+			register_task_order(db, Task, Participant, id_num)
+			register_conversation_start(db, Conversation, Participant, id_num, 0, "chatgpt")
+			register_conversation_start(db, Conversation, Participant, id_num, 1, "clochat")
 		return "OK"
 	else:
 		return "ERROR"
@@ -52,26 +78,24 @@ def register():
 @app.route('/demographics', methods=["POST"])
 def demographics():
 	args = request.args
-	id_num = args.get("id")
-
-	participant = Participant.query.filter_by(id_num=id_num).first()
-	participant.name = args.get("name")
-	participant.age = args.get("age")
-	participant.phone = args.get("phone")
-	participant.gender = args.get("gender")
-	participant.edu = args.get("edu")
-	participant.job = args.get("job")
-	participant.freq = int(args.get("freq"))
-	participant.gen_ai_friendliness = int(args.get("gen_ai_friendliness"))
-	participant.llm_friendliness = int(args.get("llm_friendliness"))
-	participant.prompting_friendliness = args.get("prompting_friendliness")
-
-	db.session.commit()
-
+	register_demographics(db, Participant, args)
 	return "OK"
 
 
 
+with app.app_context():
+	if not os.path.exists('database.db'):
+		db.create_all()
+
+	if len(Task.query.all()) == 0:
+		register_tasks(db, Task)
+
+
 if __name__ == '__main__':
+
+
 	app.run(debug=True, host='0.0.0.0', port=8888)
+
+	## if db task is not itiniated, init it
+
 
