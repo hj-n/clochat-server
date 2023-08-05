@@ -1,10 +1,12 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
 import os
 
 from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start
+
+from retreive import retreive_current_task_indices, retrieve_task_info
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
@@ -46,6 +48,7 @@ class Conversation(db.Model):
 	conver_id = db.Column(db.Integer, primary_key=True)
 	## connected Task
 	task = db.Column(db.Integer, db.ForeignKey('task.task_id_num'))
+	task_index = db.Column(db.Integer)
 	## connected Participant
 	participant = db.Column(db.Integer, db.ForeignKey('participant.id_num'))
 
@@ -55,6 +58,7 @@ class Conversation(db.Model):
 	## conversation data
 	conversation = db.Column(db.String(3600))
 	speaker      = db.Column(db.String(80))
+	study_type   = db.Column(db.String(80))
 
 
 """
@@ -70,7 +74,7 @@ def register():
 			register_participant(db, Participant, id_num)
 			register_task_order(db, Task, Participant, id_num)
 			register_conversation_start(db, Conversation, Participant, id_num, 0, "chatgpt")
-			register_conversation_start(db, Conversation, Participant, id_num, 1, "clochat")
+			register_conversation_start(db, Conversation, Participant, id_num, 0, "clochat")
 		return "OK"
 	else:
 		return "ERROR"
@@ -82,6 +86,32 @@ def demographics():
 	return "OK"
 
 
+@app.route('/currenttaskindices', methods=["GET"])
+def get_current_task_indices():
+	args = request.args
+	id_num = args.get("id")
+	study_type = args.get("studyType")
+
+	if id_num and study_type:
+		task_indices = retreive_current_task_indices(Conversation, id_num, study_type)
+		return jsonify(task_indices)
+	else:
+		return "ERROR"
+
+@app.route('/taskinfo', methods=["GET"])
+def get_task_info():
+	args = request.args
+	id_num     = args.get("id")
+	task_index = args.get("index")
+	study_type = args.get("studyType")
+
+	if task_index and study_type:
+		task_info = retrieve_task_info(Participant, Task, id_num, task_index, study_type)
+		return jsonify(task_info)
+	else:
+		return "ERROR"
+
+	
 
 with app.app_context():
 	if not os.path.exists('database.db'):

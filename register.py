@@ -36,6 +36,9 @@ def register_task_order(db, Task, Participant, id_num):
 		random.shuffle(task_ids)
 		clochat_list += task_ids[:2]
 		chatgpt_list += task_ids[2:]
+
+	random.shuffle(clochat_list)
+	random.shuffle(chatgpt_list)
 	
 	participant = Participant.query.filter_by(id_num=id_num).first()
 	participant.clochat_list = json.dumps(clochat_list)
@@ -44,16 +47,16 @@ def register_task_order(db, Task, Participant, id_num):
 	db.session.commit()
 
 
-def register_conversation_start(db, Conversation, Participant, id_num, task_index, study):
+def register_conversation_start(db, Conversation, Participant, id_num, task_index, study_type):
 	participant = Participant.query.filter_by(id_num=id_num).first()
-	if study == "chatgpt":
+	if study_type == "chatgpt":
 		task_list = json.loads(participant.chatgpt_list)
-	elif study == "clochat":
+	elif study_type == "clochat":
 		task_list = json.loads(participant.clochat_list)
 	
 	task_id = task_list[task_index]
 
-	conversation = Conversation(task=task_id, participant=id_num, is_start=True, is_end=False, conversation="", speaker="")
+	conversation = Conversation(task=task_id, task_index=task_index, participant=id_num, is_start=True, is_end=False, conversation="", speaker="", study_type=study_type)
 	db.session.add(conversation)
 	db.session.commit()
 
