@@ -56,19 +56,20 @@ def get_task_id(Participant, study_type, id_num, task_index):
 	task_id = task_list[int(task_index)]
 	return task_id
 
-def register_conversation_start(db, Conversation, Participant, id_num, task_index, study_type):
+def register_conversation_start(db, Conversation, Participant, id_num, task_index, trial_index, study_type):
 	task_id = get_task_id(Participant, study_type, id_num, task_index)
 
-	conversation = Conversation(task=task_id, task_index=task_index, participant=id_num, is_start=True, is_end=False, content="", role="", study_type=study_type)
+	conversation = Conversation(task=task_id, task_index=task_index, trial_index=trial_index, participant=id_num, is_start=True, is_end=False, content="", role="", study_type=study_type)
 	db.session.add(conversation)
 	db.session.commit()
 
-def register_new_conversation(db, Conversation, Participant, id_num, task_index, study_type, content, role):
+def register_new_conversation(db, Conversation, Participant, id_num, task_index, trial_index, study_type, content, role):
 	task_id = get_task_id(Participant, study_type, id_num, task_index)
 
 	conversation = Conversation(
 		task=task_id,
 		task_index=task_index,
+		trial_index=trial_index,
 		participant=id_num,
 		is_start=False,
 		is_end=False,
@@ -83,7 +84,19 @@ def register_new_conversation(db, Conversation, Participant, id_num, task_index,
 
 
 
+def register_survey_answer(db, SurveyAnswer, Participant, id_num, task_index, study_type, survey_type, survey_result):
+	task_id = get_task_id(Participant, study_type, id_num, task_index)
 
+	survey_answer = SurveyAnswer(
+		task=task_id,
+		task_index=task_index,
+		participant=id_num,
+		survey_type=survey_type,
+		survey_result=survey_result
+	)
+
+	db.session.add(survey_answer)
+	db.session.commit()
 
 
 

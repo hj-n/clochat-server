@@ -4,9 +4,9 @@ from flask_cors import CORS
 
 import os
 
-from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation
+from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation, register_survey_answer
 
-from retreive import retreive_current_task_indices, retrieve_task_info, retreive_conversations 
+from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations 
 
 from chatgpt_communication import get_new_answer_chatgpt
 
@@ -51,6 +51,7 @@ class Conversation(db.Model):
 	## connected Task
 	task = db.Column(db.Integer, db.ForeignKey('task.task_id_num'))
 	task_index = db.Column(db.Integer)
+	trial_index = db.Column(db.Integer)
 	## connected Participant
 	participant = db.Column(db.Integer, db.ForeignKey('participant.id_num'))
 
@@ -61,6 +62,17 @@ class Conversation(db.Model):
 	content      = db.Column(db.String(3600))
 	role         = db.Column(db.String(80))
 	study_type   = db.Column(db.String(80))
+
+class SurveyAnswer(db.Model):
+	survey_id = db.Column(db.Integer, primary_key=True)
+	## connected Participant
+	participant = db.Column(db.Integer, db.ForeignKey('participant.id_num'))
+	## connected Task
+	task = db.Column(db.Integer, db.ForeignKey('task.task_id_num'))
+	task_index = db.Column(db.Integer)
+	study_type = db.Column(db.String(80))
+	survey_type = db.Column(db.String(80))
+	survey_result = db.Column(db.String(3600))
 
 
 """
@@ -75,8 +87,8 @@ def register():
 		if len(Participant.query.filter_by(id_num=id_num).all()) == 0:
 			register_participant(db, Participant, id_num)
 			register_task_order(db, Task, Participant, id_num)
-			register_conversation_start(db, Conversation, Participant, id_num, 0, "chatgpt")
-			register_conversation_start(db, Conversation, Participant, id_num, 0, "clochat")
+			register_conversation_start(db, Conversation, Participant, id_num, 0, 0,"chatgpt")
+			register_conversation_start(db, Conversation, Participant, id_num, 0, 0, "clochat")
 		return "OK"
 	else:
 		return "ERROR"
@@ -88,15 +100,18 @@ def demographics():
 	return "OK"
 
 
-@app.route('/currenttaskindices', methods=["GET"])
+@app.route('/currenttasktrialindices', methods=["GET"])
 def get_current_task_indices():
 	args = request.args
 	id_num = args.get("id")
 	study_type = args.get("studyType")
 
 	if id_num and study_type:
-		task_indices = retreive_current_task_indices(Conversation, id_num, study_type)
-		return jsonify(task_indices)
+		task_indices, trial_indices = retreive_current_task_trial_indices(Conversation, id_num, study_type)
+		return jsonify({
+			"taskIndices": task_indices,
+			"trialIndices": trial_indices
+		})
 	else:
 		return "ERROR"
 
@@ -118,15 +133,16 @@ def post_conversation():
 	args = request.args
 	id_num     = args.get("id")
 	task_index = args.get("taskIndex")
+	trial_index = args.get("trialIndex")
 	content 	 = args.get("content")
 	study_type = args.get("studyType")
 	role 		   = "user"
 
 	if id_num and task_index and content and study_type:
-		register_new_conversation(db, Conversation, Participant, id_num, task_index, study_type, content, role)
-		conversations = retreive_conversations(Conversation, id_num, task_index, study_type)
+		register_new_conversation(db, Conversation, Participant, id_num, task_index, trial_index, study_type, content, role)
+		conversations = retreive_conversations(Conversation, id_num, task_index, trial_index, study_type)
 		answer = get_new_answer_chatgpt(conversations)
-		register_new_conversation(db, Conversation, Participant, id_num, task_index, study_type, answer, "assistant")
+		register_new_conversation(db, Conversation, Participant, id_num, task_index, trial_index, study_type, answer, "assistant")
 
 		return "OK"
 
@@ -135,10 +151,11 @@ def get_conversations():
 	args = request.args
 	id_num = args.get("id")
 	task_index = args.get("taskIndex")
+	trial_index = args.get("trialIndex")
 	study_type = args.get("studyType")
 
 	if id_num and task_index and study_type:
-		conversations = retreive_conversations(Conversation, id_num, task_index, study_type)
+		conversations = retreive_conversations(Conversation, id_num, task_index, trial_index, study_type)
 		conversations_json = []
 		for conversation in conversations:
 			if conversation.is_start or conversation.is_end:
@@ -147,7 +164,39 @@ def get_conversations():
 		return jsonify(conversations_json)
 	else:
 		return "ERROR"
-	
+
+@app.route('/postconversationstart', methods=["POST"])
+def post_conversation_start():
+	args = request.args
+	id_num = args.get("id")
+	task_index = args.get("taskIndex")
+	trial_index = args.get("trialIndex")
+	study_type = args.get("studyType")
+
+	if id_num and task_index and study_type and trial_index:
+		register_conversation_start(db, Conversation, Participant, id_num, task_index, trial_index, study_type)
+		return "OK"
+	else:
+		return "ERROR"
+
+@app.route('/postsurveyresult', methods=["POST"])
+def post_survey_result():
+	args = request.args
+	id_num = args.get("id")
+	task_index = args.get("taskIndex")
+	study_type = args.get("studyType")
+	survey_type = args.get("surveyType")
+	survey_result = args.get("surveyResult")
+
+	if id_num and task_index and study_type and survey_type and survey_result:
+		register_survey_answer(db, SurveyAnswer, Participant, id_num, task_index, study_type, survey_type, survey_result)
+		return "OK"
+	else:
+		return "ERROR"
+
+
+
+
 
 with app.app_context():
 	if not os.path.exists('database.db'):
