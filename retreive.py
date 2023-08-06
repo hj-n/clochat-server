@@ -1,5 +1,6 @@
 
 import json
+from copy import deepcopy
 
 def retreive_current_task_trial_indices(Conversations, id_num, study_type):
 	conversations = Conversations.query.filter_by(participant=id_num, study_type=study_type).all()
@@ -7,11 +8,15 @@ def retreive_current_task_trial_indices(Conversations, id_num, study_type):
 	task_indices = list(set(task_indices))
 	task_indices.sort()
 	trial_indices = []
-	for task_index in task_indices:
-		trial_indices_for_task = [c.trial_index for c in conversations if c.task_index == task_index]
-		trial_indices_for_task.sort()
-		trial_indices_for_task = list(set(trial_indices_for_task))
-		trial_indices.append(trial_indices_for_task)
+
+	for index in range(max(task_indices) + 1):
+		if index in task_indices:
+			trial_indices_for_task = [c.trial_index for c in conversations if c.task_index == index]
+			trial_indices_for_task.sort()
+			trial_indices_for_task = list(set(trial_indices_for_task))
+			trial_indices.append(trial_indices_for_task)
+		else:
+			trial_indices.append([])
 	return task_indices, trial_indices
 
 def retrieve_task_info(Participant, Task, id_num, task_index, study_type):

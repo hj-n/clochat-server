@@ -8,6 +8,8 @@ from register import register_tasks, register_participant, register_demographics
 
 from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations 
 
+from status_check import is_study_complete
+
 from chatgpt_communication import get_new_answer_chatgpt
 
 app = Flask(__name__)
@@ -195,6 +197,17 @@ def post_survey_result():
 		return "ERROR"
 
 
+@app.route('/checkstudycomplete', methods=["GET"])
+def check_study_complete():
+	args = request.args
+	id_num = args.get("id")
+	study_type = args.get("studyType")
+	task_index = args.get("taskIndex")
+
+	if id_num and study_type and task_index:
+		return jsonify({"isComplete": is_study_complete(Participant, id_num, study_type, task_index)})
+	else:
+		return "ERROR"
 
 
 
