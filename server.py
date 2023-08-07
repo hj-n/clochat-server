@@ -4,13 +4,15 @@ from flask_cors import CORS
 
 import os
 
-from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation, register_survey_answer
+from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation, register_survey_answer, register_new_persona, register_persona_dialogue
 
-from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations 
+from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations, retreive_persona_dialogue
 
 from status_check import is_study_complete
 
 from chatgpt_communication import get_new_answer_chatgpt
+
+import json
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
@@ -75,6 +77,15 @@ class SurveyAnswer(db.Model):
 	study_type = db.Column(db.String(80))
 	survey_type = db.Column(db.String(80))
 	survey_result = db.Column(db.String(3600))
+
+class Persona(db.Model):
+	persona_id = db.Column(db.Integer, primary_key=True)
+	## connected Participant
+	participant = db.Column(db.Integer, db.ForeignKey('participant.id_num'))
+	persona_num = db.Column(db.Integer)
+	input_dialogue = db.Column(db.String(100000))
+	is_category_finished = db.Column(db.String(80))
+	system_prompt = db.Column(db.String(10000))
 
 
 """
@@ -209,6 +220,49 @@ def check_study_complete():
 	else:
 		return "ERROR"
 
+@app.route('/postnewpersona', methods=["POST"])
+def post_new_persona():
+	args = request.args
+	id_num = args.get("id")
+	persona_num = args.get("personaNum")
+	
+	if id_num and persona_num:
+		register_new_persona(db, Persona, id_num, persona_num)
+		return "OK"
+	else:
+		return "ERROR"
+
+@app.route('/getpersonadialogue', methods=["GET"])
+def get_persona_dialogue():
+	args = request.args
+	id_num = args.get("id")
+	persona_num = args.get("personaNum")
+
+	if id_num and persona_num:
+
+		result = retreive_persona_dialogue(Persona, id_num, persona_num)
+		return jsonify({
+			"dialogue": result["dialogue"],
+			"isCategoryFinished": result["is_category_finished"]
+		})
+	else:
+		return "ERROR"
+	
+@app.route('/postpersonadialogue', methods=["POST"])
+def post_persona_dialogue():
+	args = request.args
+	id_num = args.get("id")
+	persona_num = args.get("personaNum")
+	dialogue = args.get("dialogue")
+	is_category_finished = args.get("isCategoryFinished")
+
+	print(dialogue, is_category_finished)
+
+	if id_num and persona_num and dialogue:
+		register_persona_dialogue(db, Persona, id_num, persona_num, dialogue, is_category_finished)
+		return "OK"
+	else:
+		return "ERROR"
 
 
 with app.app_context():

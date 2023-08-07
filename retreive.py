@@ -34,3 +34,11 @@ def retrieve_task_info(Participant, Task, id_num, task_index, study_type):
 def retreive_conversations(Conversations, id_num, task_index, trial_index, study_type):
 	conversations = Conversations.query.filter_by(participant=id_num, task_index=task_index, trial_index=trial_index, study_type=study_type).all()
 	return conversations
+
+def retreive_persona_dialogue(Persona, id_num, persona_num):
+	persona = Persona.query.filter_by(participant=id_num, persona_num=persona_num).first()
+
+	return {
+		"dialogue": json.loads(persona.input_dialogue),
+		"is_category_finished": json.loads(persona.is_category_finished)
+	}

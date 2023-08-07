@@ -117,3 +117,18 @@ def register_demographics(db, Participant, args):
 	participant.prompting_friendliness = args.get("prompting_friendliness")
 
 	db.session.commit()
+
+def register_new_persona(db, Persona, id_num, persona_num):
+	persona = Persona(
+		participant=id_num, persona_num=persona_num, 
+		input_dialogue="[{}, {}, {}, {} ,{}, {}]",
+		is_category_finished = "[false, false, false, false, false, false]"
+	)
+	db.session.add(persona)
+	db.session.commit()
+
+def register_persona_dialogue(db, Persona, id_num, persona_num, dialogue, is_category_finished):
+	persona = Persona.query.filter_by(participant=id_num, persona_num=persona_num).first()
+	persona.input_dialogue = dialogue
+	persona.is_category_finished = is_category_finished
+	db.session.commit()
