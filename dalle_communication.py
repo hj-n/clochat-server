@@ -4,7 +4,7 @@ with open("./key.txt", "r") as f:
 	openai.api_key = f.read()
 
 
-def get_new_image(prompt):
+def get_new_images(prompt):
 	response = openai.Image.create(
 		prompt=prompt,
 		n=4,

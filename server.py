@@ -10,7 +10,8 @@ from retreive import retreive_current_task_trial_indices, retrieve_task_info, re
 
 from status_check import is_study_complete
 
-from chatgpt_communication import get_new_answer_chatgpt
+from chatgpt_communication import get_new_answer_chatgpt, get_translation_dalle_prompt
+from dalle_communication import get_new_images
 
 import json
 
@@ -86,6 +87,9 @@ class Persona(db.Model):
 	input_dialogue = db.Column(db.String(100000))
 	is_category_finished = db.Column(db.String(80))
 	system_prompt = db.Column(db.String(10000))
+	kr_prompt = db.Column(db.String(3600))
+	en_prompt = db.Column(db.String(3600))
+	img_url = db.Column(db.String(3600))
 
 
 """
@@ -264,13 +268,23 @@ def post_persona_dialogue():
 	else:
 		return "ERROR"
 	
-@app.route('/postpromptandgeturls', methods=["POST"])
-def post_prompt_and_get_urls():
+@app.route('/getgeneratedimageurls', methods=["GET"])
+def get_generated_image_urls():
 	args = request.args
-	id_num = args.get("id")
-	persona_num = args.get("personaNum")
-	prompt = args.get("prompt")
-	## TODO
+	prompt_kr = args.get("prompt")
+
+	if prompt_kr:
+		prompt_en = get_translation_dalle_prompt(prompt_kr)
+		image_urls = get_new_images(prompt_en)
+		return jsonify({
+			"promptEn": prompt_en,
+			"imageUrls": image_urls
+		})
+	else:
+		return "ERROR"
+		
+
+	
 
 
 with app.app_context():
