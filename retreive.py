@@ -42,3 +42,13 @@ def retreive_persona_dialogue(Persona, id_num, persona_num):
 		"dialogue": json.loads(persona.input_dialogue),
 		"is_category_finished": json.loads(persona.is_category_finished)
 	}
+
+def retreive_persona_info(Persona, id_num, persona_num):
+	persona = Persona.query.filter_by(participant=id_num, persona_num=persona_num).first()
+
+	return ({
+		"promptKr": persona.kr_prompt,
+		"promptEn": persona.en_prompt,
+		"imgUrls":  json.loads(persona.img_urls),
+		"imgUrlIndex":  persona.img_url_index
+	})

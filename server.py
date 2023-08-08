@@ -4,9 +4,9 @@ from flask_cors import CORS
 
 import os
 
-from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation, register_survey_answer, register_new_persona, register_persona_dialogue
+from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation, register_survey_answer, register_new_persona, register_persona_dialogue, register_persona_img
 
-from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations, retreive_persona_dialogue
+from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations, retreive_persona_dialogue, retreive_persona_info
 
 from status_check import is_study_complete
 
@@ -89,7 +89,8 @@ class Persona(db.Model):
 	system_prompt = db.Column(db.String(10000))
 	kr_prompt = db.Column(db.String(3600))
 	en_prompt = db.Column(db.String(3600))
-	img_url = db.Column(db.String(3600))
+	img_urls = db.Column(db.String(3600))
+	img_url_index = db.Column(db.Integer)
 
 
 """
@@ -284,8 +285,34 @@ def get_generated_image_urls():
 		return "ERROR"
 		
 
-	
+@app.route('/postpersonaimg', methods=["POST"])
+def post_persona_img():
+	args = request.args
+	id_num = args.get("id")
+	persona_num = args.get("personaNum")
+	img_urls = args.get("imgUrls")
+	img_url_index = args.get("imgUrlIndex")
+	prompt_kr = args.get("promptKr")
+	prompt_en = args.get("promptEn")
 
+	if id_num and persona_num and img_urls and img_url_index:
+		register_persona_img(db, Persona, id_num, persona_num, img_urls, img_url_index, prompt_kr, prompt_en)
+		return "OK"
+	else:
+		return "ERROR"
+
+@app.route('/getpersonainfo', methods=["GET"])
+def get_persona_info():
+	args = request.args
+	id_num = args.get("id")
+	persona_num = args.get("personaNum")
+
+	if id_num and persona_num:
+		persona_info = retreive_persona_info(Persona, id_num, persona_num)
+		return jsonify(persona_info)
+	else:
+		return "ERROR"
+	
 
 with app.app_context():
 	if not os.path.exists('database.db'):

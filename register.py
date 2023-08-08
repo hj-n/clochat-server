@@ -122,7 +122,8 @@ def register_new_persona(db, Persona, id_num, persona_num):
 	persona = Persona(
 		participant=id_num, persona_num=persona_num, 
 		input_dialogue="[{}, {}, {}, {} ,{}, {}]",
-		is_category_finished = "[false, false, false, false, false, false]"
+		is_category_finished = "[false, false, false, false, false, false]",
+		img_urls = "[]",
 	)
 	db.session.add(persona)
 	db.session.commit()
@@ -131,4 +132,12 @@ def register_persona_dialogue(db, Persona, id_num, persona_num, dialogue, is_cat
 	persona = Persona.query.filter_by(participant=id_num, persona_num=persona_num).first()
 	persona.input_dialogue = dialogue
 	persona.is_category_finished = is_category_finished
+	db.session.commit()
+
+def register_persona_img(db, Persona, id_num, person_num, img_urls, img_url_index, prompt_kr, prompt_en):
+	persona = Persona.query.filter_by(participant=id_num, persona_num=person_num).first()
+	persona.img_urls = img_urls
+	persona.img_url_index = img_url_index
+	persona.kr_prompt = prompt_kr
+	persona.en_prompt = prompt_en
 	db.session.commit()
