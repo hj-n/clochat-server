@@ -263,6 +263,14 @@ def post_persona_dialogue():
 		return "OK"
 	else:
 		return "ERROR"
+	
+@app.route('/postpromptandgeturls', methods=["POST"])
+def post_prompt_and_get_urls():
+	args = request.args
+	id_num = args.get("id")
+	persona_num = args.get("personaNum")
+	prompt = args.get("prompt")
+	## TODO
 
 
 with app.app_context():
