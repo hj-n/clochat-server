@@ -1,6 +1,6 @@
 
 import json
-from copy import deepcopy
+from chatgpt_communication import convert_input_dialogue_to_persona_prompt, get_preview
 
 def retreive_current_task_trial_indices(Conversations, id_num, study_type):
 	conversations = Conversations.query.filter_by(participant=id_num, study_type=study_type).all()
@@ -52,3 +52,14 @@ def retreive_persona_info(Persona, id_num, persona_num):
 		"imgUrls":  json.loads(persona.img_urls),
 		"imgUrlIndex":  persona.img_url_index
 	})
+
+def retreive_persona_preview(Persona, id_num, persona_num, preview_prompt):
+	persona = Persona.query.filter_by(participant=id_num, persona_num=persona_num).first()
+	input_dialogue_str = persona.input_dialogue
+
+	persona_prompt = convert_input_dialogue_to_persona_prompt(input_dialogue_str)
+	print(persona_prompt)
+	answer = get_preview(persona_prompt, preview_prompt)
+
+	return answer
+

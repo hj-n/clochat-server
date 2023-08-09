@@ -6,7 +6,7 @@ import os
 
 from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation, register_survey_answer, register_new_persona, register_persona_dialogue, register_persona_img
 
-from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations, retreive_persona_dialogue, retreive_persona_info
+from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations, retreive_persona_dialogue, retreive_persona_info, retreive_persona_preview
 
 from status_check import is_study_complete
 
@@ -312,7 +312,21 @@ def get_persona_info():
 		return jsonify(persona_info)
 	else:
 		return "ERROR"
-	
+
+@app.route('/getpersonapreview', methods=["GET"])
+def get_persona_preview():
+	args = request.args
+	id_num = args.get("id")
+	persona_num = args.get("personaNum")
+	preview_prompt = args.get("previewPrompt")
+
+	if id_num and persona_num and preview_prompt:
+		preview_answer = retreive_persona_preview(Persona, id_num, persona_num, preview_prompt)
+		return preview_answer
+	else:
+		return "ERROR"
+
+
 
 with app.app_context():
 	if not os.path.exists('database.db'):
