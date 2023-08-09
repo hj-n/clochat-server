@@ -63,3 +63,24 @@ def retreive_persona_preview(Persona, id_num, persona_num, preview_prompt):
 
 	return answer
 
+def retreive_persona_info_list(Persona, id_num):
+	personas = Persona.query.filter_by(participant=id_num).all()
+	persona_info_list = []
+	for persona in personas:
+		persona_info_list.append({
+			"imageDialogue": json.loads(persona.input_dialogue),
+			"imgUrls":  json.loads(persona.img_urls),
+			"imgUrlIndex":  persona.img_url_index,
+			"personaNum": persona.persona_num,
+			"promptKr": persona.kr_prompt,
+			"promptEn": persona.en_prompt,
+		})
+	return persona_info_list
+
+def retreive_next_persona_num(Persona, id_num):
+	personas = Persona.query.filter_by(participant=id_num).all()
+	persona_nums = [p.persona_num for p in personas]
+	if len(persona_nums) == 0:
+		return 0
+	else:
+		return max(persona_nums) + 1

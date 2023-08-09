@@ -6,7 +6,7 @@ import os
 
 from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation, register_survey_answer, register_new_persona, register_persona_dialogue, register_persona_img
 
-from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations, retreive_persona_dialogue, retreive_persona_info, retreive_persona_preview
+from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations, retreive_persona_dialogue, retreive_persona_info, retreive_persona_preview, retreive_persona_info_list, retreive_next_persona_num
 
 from status_check import is_study_complete
 
@@ -323,6 +323,28 @@ def get_persona_preview():
 	if id_num and persona_num and preview_prompt:
 		preview_answer = retreive_persona_preview(Persona, id_num, persona_num, preview_prompt)
 		return preview_answer
+	else:
+		return "ERROR"
+	
+@app.route('/getpersonainfolist', methods=["GET"])
+def get_persona_info_list():
+	args = request.args
+	id_num = args.get("id")
+
+	if id_num:
+		persona_info_list = retreive_persona_info_list(Persona, id_num)
+		return jsonify(persona_info_list)
+	else:
+		return "ERROR"
+
+
+@app.route('/getnextpersonanum', methods=["GET"])
+def get_next_persona_num():
+	args = request.args
+	id_num = args.get("id")
+
+	if id_num:
+		return str(retreive_next_persona_num(Persona, id_num))
 	else:
 		return "ERROR"
 
