@@ -97,6 +97,10 @@ class Persona(db.Model):
 Server functions
 """
 
+@app.route('/', methods=["GET"])
+def hello_world():
+	return "Hello, World!"
+
 
 @app.route('/register', methods=["POST"])
 def register():
@@ -388,7 +392,7 @@ with app.app_context():
 if __name__ == '__main__':
 
 
-	app.run(debug=True, host='0.0.0.0', port=8888)
+	app.run(host='0.0.0.0', port=9109)
 
 	## if db task is not itiniated, init it
 
