@@ -6,6 +6,9 @@ import dalle_communication as dalle
 with open("./key.txt", "r") as f:
 	openai.api_key = f.read()
 
+# gpt_model = "gpt-3.5-turbo"
+gpt_model = "gpt-4"
+
 
 def get_new_answer_chatgpt(conversations):
 	messages = []
@@ -15,12 +18,33 @@ def get_new_answer_chatgpt(conversations):
 			continue
 		messages.append({"role": conversation.role, "content": conversation.content})
 	response = openai.ChatCompletion.create(
-		model="gpt-4",
+		model=gpt_model,
 		messages=messages
 	)
 
 	answer = response['choices'][0]['message']['content']
 	return answer
+
+def get_new_answer_clochat(db, Persona, conversations, id_num, persona_num):
+	messages = []
+	persona = Persona.query.filter_by(participant=id_num, persona_num=persona_num).first()
+	if persona.system_prompt == None or persona.system_prompt == "":
+		persona.system_prompt = convert_input_dialogue_to_persona_prompt(persona.input_dialogue)
+		db.session.commit()
+	messages.append({"role": "system", "content": persona.system_prompt})
+
+	for conversation in conversations:
+		if conversation.is_start or conversation.is_end:
+			continue
+		messages.append({"role": conversation.role, "content": conversation.content})
+	
+	response = openai.ChatCompletion.create(
+		model=gpt_model,
+		messages=messages
+	)
+
+	answer = response['choices'][0]['message']['content']
+	return answer	
 
 
 def get_translation_dalle_prompt(prompt_kr):
@@ -39,7 +63,7 @@ def get_translation_dalle_prompt(prompt_kr):
 	]
 
 	response = openai.ChatCompletion.create(
-		model="gpt-4",
+		model=gpt_model,
 		messages=messages
 	)
 
@@ -83,7 +107,7 @@ def convert_input_dialogue_to_persona_prompt(input_dialogue):
 	]
 
 	response = openai.ChatCompletion.create(
-		model="gpt-4",
+		model=gpt_model,
 		messages=messages
 	)
 
@@ -101,7 +125,7 @@ def get_preview(persona_prompt, preview_prompt):
 	]
 
 	response = openai.ChatCompletion.create(
-		model="gpt-4",
+		model=gpt_model,
 		messages=messages
 	)
 

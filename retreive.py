@@ -50,7 +50,8 @@ def retreive_persona_info(Persona, id_num, persona_num):
 		"promptKr": persona.kr_prompt,
 		"promptEn": persona.en_prompt,
 		"imgUrls":  json.loads(persona.img_urls),
-		"imgUrlIndex":  persona.img_url_index
+		"imgUrlIndex":  persona.img_url_index,
+		"inputDialogue": json.loads(persona.input_dialogue),
 	})
 
 def retreive_persona_preview(Persona, id_num, persona_num, preview_prompt):
@@ -84,3 +85,11 @@ def retreive_next_persona_num(Persona, id_num):
 		return 0
 	else:
 		return max(persona_nums) + 1
+	
+def retreive_next_trial_index(Conversations, id_num, task_index, study_type):
+	conversations = Conversations.query.filter_by(participant=id_num, task_index=task_index, study_type=study_type).all()
+	trial_indices = [c.trial_index for c in conversations]
+	if len(trial_indices) == 0:
+		return 0
+	else:
+		return max(trial_indices) + 1

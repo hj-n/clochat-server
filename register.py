@@ -134,6 +134,11 @@ def register_persona_dialogue(db, Persona, id_num, persona_num, dialogue, is_cat
 	persona.is_category_finished = is_category_finished
 	db.session.commit()
 
+def register_is_category_finished(db, Persona, id_num, persona_num, is_category_finished):
+	persona = Persona.query.filter_by(participant=id_num, persona_num=persona_num).first()
+	persona.is_category_finished = is_category_finished
+	db.session.commit()
+
 def register_persona_img(db, Persona, id_num, person_num, img_urls, img_url_index, prompt_kr, prompt_en):
 	persona = Persona.query.filter_by(participant=id_num, persona_num=person_num).first()
 	persona.img_urls = img_urls

@@ -4,13 +4,13 @@ from flask_cors import CORS
 
 import os
 
-from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation, register_survey_answer, register_new_persona, register_persona_dialogue, register_persona_img
+from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation, register_survey_answer, register_new_persona, register_persona_dialogue, register_persona_img, register_is_category_finished
 
-from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations, retreive_persona_dialogue, retreive_persona_info, retreive_persona_preview, retreive_persona_info_list, retreive_next_persona_num
+from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations, retreive_persona_dialogue, retreive_persona_info, retreive_persona_preview, retreive_persona_info_list, retreive_next_persona_num, retreive_next_trial_index
 
 from status_check import is_study_complete
 
-from chatgpt_communication import get_new_answer_chatgpt, get_translation_dalle_prompt
+from chatgpt_communication import get_new_answer_chatgpt, get_translation_dalle_prompt, get_new_answer_clochat
 from dalle_communication import get_new_images
 
 import json
@@ -106,7 +106,6 @@ def register():
 			register_participant(db, Participant, id_num)
 			register_task_order(db, Task, Participant, id_num)
 			register_conversation_start(db, Conversation, Participant, id_num, 0, 0,"chatgpt")
-			register_conversation_start(db, Conversation, Participant, id_num, 0, 0, "clochat")
 		return "OK"
 	else:
 		return "ERROR"
@@ -154,12 +153,16 @@ def post_conversation():
 	trial_index = args.get("trialIndex")
 	content 	 = args.get("content")
 	study_type = args.get("studyType")
+	persona_num = args.get("personaNum")
 	role 		   = "user"
 
 	if id_num and task_index and content and study_type:
 		register_new_conversation(db, Conversation, Participant, id_num, task_index, trial_index, study_type, content, role)
 		conversations = retreive_conversations(Conversation, id_num, task_index, trial_index, study_type)
-		answer = get_new_answer_chatgpt(conversations)
+		if study_type == "chatgpt":
+			answer = get_new_answer_chatgpt(conversations)
+		elif study_type == "clochat":
+			answer = get_new_answer_clochat(db, Persona, conversations, id_num, persona_num)
 		register_new_conversation(db, Conversation, Participant, id_num, task_index, trial_index, study_type, answer, "assistant")
 
 		return "OK"
@@ -261,10 +264,22 @@ def post_persona_dialogue():
 	dialogue = args.get("dialogue")
 	is_category_finished = args.get("isCategoryFinished")
 
-	print(dialogue, is_category_finished)
 
 	if id_num and persona_num and dialogue:
 		register_persona_dialogue(db, Persona, id_num, persona_num, dialogue, is_category_finished)
+		return "OK"
+	else:
+		return "ERROR"
+	
+@app.route('/postiscategoryfinished', methods=["POST"])
+def post_is_category_finished():
+	args = request.args
+	id_num = args.get("id")
+	persona_num = args.get("personaNum")
+	is_category_finished = args.get("isCategoryFinished")
+
+	if id_num and persona_num and is_category_finished:
+		register_is_category_finished(db, Persona, id_num, persona_num, is_category_finished)
 		return "OK"
 	else:
 		return "ERROR"
@@ -348,6 +363,18 @@ def get_next_persona_num():
 	else:
 		return "ERROR"
 
+
+@app.route('/getnexttrialindex', methods=["GET"])
+def get_next_trial_index():
+	args = request.args
+	id_num = args.get("id")
+	task_index = args.get("taskIndex")
+	study_type = args.get("studyType")
+
+	if id_num and study_type:
+		return str(retreive_next_trial_index(Conversation, id_num, task_index, study_type))
+	else:
+		return "ERROR"
 
 
 with app.app_context():
