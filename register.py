@@ -56,14 +56,18 @@ def get_task_id(Participant, study_type, id_num, task_index):
 	task_id = task_list[int(task_index)]
 	return task_id
 
-def register_conversation_start(db, Conversation, Participant, id_num, task_index, trial_index, study_type):
+def register_conversation_start(db, Conversation, Participant, id_num, task_index, trial_index, study_type, persona_num):
 	task_id = get_task_id(Participant, study_type, id_num, task_index)
 
 	conversation = Conversation(task=task_id, task_index=task_index, trial_index=trial_index, participant=id_num, is_start=True, is_end=False, content="", role="", study_type=study_type)
+	
+	if study_type == "clochat":
+		conversation.persona_num = persona_num
+
 	db.session.add(conversation)
 	db.session.commit()
 
-def register_new_conversation(db, Conversation, Participant, id_num, task_index, trial_index, study_type, content, role):
+def register_new_conversation(db, Conversation, Participant, id_num, task_index, trial_index, study_type, content, role, persona_num):
 	task_id = get_task_id(Participant, study_type, id_num, task_index)
 
 	conversation = Conversation(
@@ -75,8 +79,11 @@ def register_new_conversation(db, Conversation, Participant, id_num, task_index,
 		is_end=False,
 		content=content,
 		role=role,
-		study_type=study_type
+		study_type=study_type,
 	)
+
+	if study_type == "clochat":
+		conversation.persona_num = persona_num
 
 	db.session.add(conversation)
 	db.session.commit()

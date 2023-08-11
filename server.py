@@ -67,6 +67,7 @@ class Conversation(db.Model):
 	content      = db.Column(db.String(3600))
 	role         = db.Column(db.String(80))
 	study_type   = db.Column(db.String(80))
+	related_persona = db.Column(db.Integer, db.ForeignKey('persona.persona_id'))
 
 class SurveyAnswer(db.Model):
 	survey_id = db.Column(db.Integer, primary_key=True)
@@ -109,7 +110,7 @@ def register():
 		if len(Participant.query.filter_by(id_num=id_num).all()) == 0:
 			register_participant(db, Participant, id_num)
 			register_task_order(db, Task, Participant, id_num)
-			register_conversation_start(db, Conversation, Participant, id_num, 0, 0,"chatgpt")
+			register_conversation_start(db, Conversation, Participant, id_num, 0, 0,"chatgpt", None)
 		return "OK"
 	else:
 		return "ERROR"
@@ -161,13 +162,13 @@ def post_conversation():
 	role 		   = "user"
 
 	if id_num and task_index and content and study_type:
-		register_new_conversation(db, Conversation, Participant, id_num, task_index, trial_index, study_type, content, role)
+		register_new_conversation(db, Conversation, Participant, id_num, task_index, trial_index, study_type, content, role, persona_num)
 		conversations = retreive_conversations(Conversation, id_num, task_index, trial_index, study_type)
 		if study_type == "chatgpt":
 			answer = get_new_answer_chatgpt(conversations)
 		elif study_type == "clochat":
 			answer = get_new_answer_clochat(db, Persona, conversations, id_num, persona_num)
-		register_new_conversation(db, Conversation, Participant, id_num, task_index, trial_index, study_type, answer, "assistant")
+		register_new_conversation(db, Conversation, Participant, id_num, task_index, trial_index, study_type, answer, "assistant", persona_num)
 
 		return "OK"
 
@@ -197,9 +198,10 @@ def post_conversation_start():
 	task_index = args.get("taskIndex")
 	trial_index = args.get("trialIndex")
 	study_type = args.get("studyType")
+	persona_num = args.get("personaNum")
 
 	if id_num and task_index and study_type and trial_index:
-		register_conversation_start(db, Conversation, Participant, id_num, task_index, trial_index, study_type)
+		register_conversation_start(db, Conversation, Participant, id_num, task_index, trial_index, study_type, persona_num)
 		return "OK"
 	else:
 		return "ERROR"
