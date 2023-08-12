@@ -89,7 +89,7 @@ def convert_input_dialogue_to_persona_prompt(input_dialogue):
 	 5. Verbal Relational Contents (기타 대화 관계적 내용)
 	 6. Else (기타) \n
 	 \n
-	 Please write the ChatGPT system prompt that you think would make ChatGPT to act like the persona described in the JSON string. \n
+	 Please write the ChatGPT system English prompt that you think would make ChatGPT to act like the persona described in the JSON string. \n
 	 Do not write explanations. \n
 	 If the name and personal info of the persona is not specified, you can freely choose the name of it. \n
 	 Please put the system prompt within '<' and '>'. 

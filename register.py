@@ -99,7 +99,8 @@ def register_survey_answer(db, SurveyAnswer, Participant, id_num, task_index, st
 		task_index=task_index,
 		participant=id_num,
 		survey_type=survey_type,
-		survey_result=survey_result
+		survey_result=survey_result,
+		study_type=study_type,
 	)
 
 	db.session.add(survey_answer)

@@ -298,3 +298,5 @@ pyrightconfig.json
 *.db
 
 *.txt
+
+*.jpg

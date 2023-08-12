@@ -93,3 +93,18 @@ def retreive_next_trial_index(Conversations, id_num, task_index, study_type):
 		return 0
 	else:
 		return max(trial_indices) + 1
+	
+
+def retreive_survey_result(SurveyAnswer, id_num):
+	survey_answers = SurveyAnswer.query.filter_by(participant=id_num).all()
+
+	survey_answer_list = []
+	for survey_answer in survey_answers:
+		survey_answer_list.append({
+			"taskIndex": survey_answer.task_index,
+			"studyType": survey_answer.study_type,
+			"surveyType": survey_answer.survey_type,
+			"surveyResult": json.loads(survey_answer.survey_result)
+		})
+
+	return survey_answer_list
