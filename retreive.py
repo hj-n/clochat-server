@@ -108,3 +108,22 @@ def retreive_survey_result(SurveyAnswer, id_num):
 		})
 
 	return survey_answer_list
+
+
+def retreive_entire_conversation(Conversation, id_num):
+	conversations = Conversation.query.filter_by(participant=id_num).all()
+
+	conversation_list = []
+	for conversation in conversations:
+		conversation_list.append({
+			"studyType": conversation.study_type,
+			"taskIndex": conversation.task_index,
+			"trialIndex": conversation.trial_index,
+			"role": conversation.role,
+			"content": conversation.content,
+			"isStart": conversation.is_start,
+			"isEnd": conversation.is_end,
+			"relatedPersona": conversation.related_persona,
+		})
+
+	return conversation_list

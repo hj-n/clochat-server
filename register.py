@@ -1,7 +1,7 @@
 import json
 import random
 
-TASK_PATH = "./assets/task_crafted.json"
+TASK_PATH = "./assets/task_generated.json"
 
 def register_tasks(db, Task):
 	tasks = json.load(open(TASK_PATH))
@@ -62,7 +62,7 @@ def register_conversation_start(db, Conversation, Participant, id_num, task_inde
 	conversation = Conversation(task=task_id, task_index=task_index, trial_index=trial_index, participant=id_num, is_start=True, is_end=False, content="", role="", study_type=study_type)
 	
 	if study_type == "clochat":
-		conversation.persona_num = persona_num
+		conversation.related_persona = persona_num
 
 	db.session.add(conversation)
 	db.session.commit()
@@ -83,7 +83,7 @@ def register_new_conversation(db, Conversation, Participant, id_num, task_index,
 	)
 
 	if study_type == "clochat":
-		conversation.persona_num = persona_num
+		conversation.related_persona = persona_num
 
 	db.session.add(conversation)
 	db.session.commit()

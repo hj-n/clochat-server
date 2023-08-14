@@ -6,7 +6,7 @@ import os
 
 from register import register_tasks, register_participant, register_demographics, register_task_order, register_conversation_start, register_new_conversation, register_survey_answer, register_new_persona, register_persona_dialogue, register_persona_img, register_is_category_finished
 
-from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations, retreive_persona_dialogue, retreive_persona_info, retreive_persona_preview, retreive_persona_info_list, retreive_next_persona_num, retreive_next_trial_index, retreive_survey_result
+from retreive import retreive_current_task_trial_indices, retrieve_task_info, retreive_conversations, retreive_persona_dialogue, retreive_persona_info, retreive_persona_preview, retreive_persona_info_list, retreive_next_persona_num, retreive_next_trial_index, retreive_survey_result, retreive_entire_conversation
 
 from status_check import is_study_complete
 
@@ -390,7 +390,15 @@ def get_survey_result():
 	if id_num:
 		return jsonify(retreive_survey_result(SurveyAnswer, id_num))
 
-
+@app.route('/getentireconversation', methods=["GET"])
+def get_entire_conversation():
+	args = request.args
+	id_num = args.get("id")
+	
+	if id_num:
+		return jsonify(retreive_entire_conversation(Conversation, id_num))
+	else:
+		return "ERROR"
 
 with app.app_context():
 	if not os.path.exists('database.db'):
@@ -403,7 +411,7 @@ with app.app_context():
 if __name__ == '__main__':
 
 
-	app.run(host='0.0.0.0', port=9109, debug=True)
+	app.run(host='0.0.0.0', port=9109)
 
 	## if db task is not itiniated, init it
 
